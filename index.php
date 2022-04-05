@@ -54,46 +54,71 @@
                 <form id="form-login" class="col s12" method="post">
                     <div class="row">
                         <div class="input-field col s12">
-                            <input id="email" name="email" type="email" class="validate">
-                            <label for="email">Email</label>
+                            <input id="username" name="username" type="text" class="validate" required pattern="[a-zA-Z0-9\s]{3,20}" minlength="3" maxlength="20">
+                            <label for="username">Username</label>
                         </div>
                     </div>
                     <div class="row">
                         <div class="input-field col s12">
-                            <input id="password" name="password" type="password" class="validate">
+                            <input id="password" name="password" type="password" class="validate" required pattern="[a-zA-Z0-9\s]{3,20}" minlength="3" maxlength="20">
                             <label for="password">Password</label>
                         </div>
                     </div>
+                    <button id="login" type="submit" hidden></button>
                 </form>
             </div>
         </div>
         <div class="modal-footer">
-            <button class="btn waves-effect waves-light" type="submit" name="action">Submit
-                <i class="material-icons right">send</i>
+            <button onclick="$('#login').click()" class="btn waves-effect waves-light" type="submit" name="action">
+                Login
             </button>
         </div>
     </div>
 </body>
 <script type="text/javascript">
-    const APPURL = "pendek.id", API = "http://localhost:1000";
-
-    $("#form-shortlink").submit(function(event) {
-        event.preventDefault();
-        $.ajax({
-            url: API+"/link/submit",
-            data: JSON.stringify({
-                "longurl": $("#url").val()
-            }),
-            headers: {
-                "Content-Type": 'application/json'
-            },
-            dataType: "json",
-            type: "post"
-        }).done((data, status, xhr) => {
-            if (data.status == 201) {
-                 M.toast({html: 'Success!', classes: 'rounded'});
-            }
-        })
+    $(document).ready(function() {
+        const APPURL = "pendek.id", API = "http://localhost:1000";
+        $("#form-shortlink").submit(function(event) {
+            event.preventDefault();
+            $.ajax({
+                url: API+"/link/submit",
+                data: JSON.stringify({
+                    "longurl": $("#url").val()
+                }),
+                headers: {
+                    "Content-Type": 'application/json'
+                },
+                dataType: "json",
+                type: "post"
+            }).done((data, status, xhr) => {
+                if (data.status == 201) {
+                    M.toast({html: 'Success!', classes: 'rounded'});
+                }
+            })
+        });
+        $("#form-login").submit(function(event) {
+            event.preventDefault();
+            $.ajax({
+                url: API+"/user/login",
+                data: JSON.stringify({
+                    "username": $("#username").val(),
+                    "password": $("#password").val()
+                }),
+                headers: {
+                    "Content-Type": 'application/json'
+                },
+                dataType: "json",
+                type: "post"
+            }).done((data, status, xhr) => {
+                if (data.status == 200) {
+                    M.toast({html: 'You are successfully logged in!', classes: 'rounded'});
+                }
+            }).fail((xhr, status, err) => {
+                if (xhr.status == 404 || xhr.status == 400) {
+                    M.toast({html: 'Username or password is wrong!', classes: 'rounded'});
+                }
+            })
+        });
     });
 </script>
 </html>
