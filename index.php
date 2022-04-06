@@ -27,8 +27,8 @@
         <div class="nav-wrapper container">
             <a href="/" class="brand-logo">Shortlink App</a>
             <ul id="nav-mobile" class="right hide-on-med-and-down">
-                <li><a class="modal-trigger" href="#modal-login">Signin</a></li>
-                <li><a href="">Signup</a></li>
+                <li><a class="modal-trigger" href="#modal-signin" id="sign-in">Signin</a></li>
+                <li><a class="modal-trigger" href="#modal-signup" id="sign-up">Signup</a></li>
             </ul>
         </div>
     </nav>
@@ -47,7 +47,7 @@
         </div>
     </div>
     <!-- Modal Structure -->
-    <div id="modal-login" class="modal">
+    <div id="modal-signin" class="modal">
         <div class="modal-content">
             <h4>Form Login</h4>
             <div class="row">
@@ -78,6 +78,46 @@
 <script type="text/javascript">
     $(document).ready(function() {
         const APPURL = "pendek.id", API = "http://localhost:1000";
+        
+        init();
+        function init(){
+            islogin = getItemWithExpiry('is_login');
+            if (islogin) {
+                name = getItemWithExpiry('username');
+                $("#sign-in").text(name).prop('href', '#');
+                $("#sign-up").text("Logout").prop('href', '#').click(function(event) {
+                    if (confirm("Are you sure want to logout ?")) {
+                        window.localStorage.clear();
+                        window.location.reload(0);
+                    }
+                });
+            }
+            console.log("init");
+        }
+
+        function setItemWithExpiry(key, value, ttl = 2592000000) {
+            const now = new Date();
+            const item = {
+                value: value,
+                expiry: now.getTime() + ttl
+            };
+            localStorage.setItem(key, JSON.stringify(item));
+        }
+
+        function getItemWithExpiry(key) {
+            const itemStr = localStorage.getItem(key);
+            if (!itemStr) {
+                return null;
+            }
+            const item = JSON.parse(itemStr),
+                  now = new Date();
+            if (now.getTime() > item.expiry) {
+                localStorage.removeItem(key);
+                return null;
+            }
+            return item.value;
+        }
+
         $("#form-shortlink").submit(function(event) {
             event.preventDefault();
             $.ajax({
@@ -98,6 +138,7 @@
         });
         $("#form-login").submit(function(event) {
             event.preventDefault();
+            M.toast({html: 'Please wait...', classes: 'rounded'});
             $.ajax({
                 url: API+"/user/login",
                 data: JSON.stringify({
@@ -111,7 +152,14 @@
                 type: "post"
             }).done((data, status, xhr) => {
                 if (data.status == 200) {
+                    const name = data.data;
                     M.toast({html: 'You are successfully logged in!', classes: 'rounded'});
+                    setItemWithExpiry('is_login', true);
+                    setItemWithExpiry('is_login', true);
+                    setItemWithExpiry('username', $("#username").val());
+                    setItemWithExpiry('name', name);
+                    init();
+                    $("#modal-signin").modal('close');
                 }
             }).fail((xhr, status, err) => {
                 if (xhr.status == 404 || xhr.status == 400) {
