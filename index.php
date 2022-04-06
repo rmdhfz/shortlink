@@ -6,20 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shortlink - App | Universitas Pamulang</title>
     <link rel="icon" href="img/shortlink.png">
+    <meta name="keyword" content="url shortener, pendek.id, penyingkat url">
+    <meta name="description" content="Make your long links into short just in one click, or create your personal / business microsite easily.">
     <meta name="msapplication-TileColor" content="#FFFFFF">
     <meta name="msapplication-tap-highlight" content="no">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" media="screen, projection">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" media="screen, projection">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <!-- datatable -->
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" media="screen, projection">
+    <script src="//cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <!-- datatable -->
+    <link rel="stylesheet" type="text/css" href="css/loading.css">
     <script>
         $(document).ready(function(){
             $('.modal').modal();
         });
     </script>
     <style type="text/css">
-        #box {
-            margin-top: 10rem;
+        #box, #box-al {
+            margin-top: 8rem;
         }
     </style>
 </head>
@@ -34,20 +41,39 @@
         </div>
     </nav>
     <div class="container">
-        <div id="box">
-            <h3> <b> The Shortest Link Shortener </b></h3>
-            <form id="form-shortlink" class="col s12" method="post" autocomplete="off" accept-charset="utf-8">
-                <div class="row">
-                    <div class="input-field col s12">
-                        <input id="url" name="url" type="url" class="validate" placeholder="https://yourdomain.id/very-long-link" required>
-                        <label for="url">Long URL</label>
+        <div class="row">
+            <div class="col s12" id="box">
+                <h3> <b> The Link Shortener </b></h3>
+                <form id="form-shortlink" class="col s12" method="post" autocomplete="off" accept-charset="utf-8">
+                    <div class="row">
+                        <div class="input-field col s12">
+                            <input id="url" name="url" type="url" class="validate" placeholder="https://yourdomain.id/very-long-link" required>
+                            <label for="url">Long URL</label>
+                        </div>
                     </div>
+                    <button type="submit" class="btn waves-effect waves-light blue" style="width: 100%;">SHORT IT!</button>
+                </form>  
+            </div>
+            <div class="col s6" id="box-al" hidden="true">
+                <div class="container">
+                    <h4><b>My Shortlink</b></h4>
+                    <table id="mytable" class="display">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Long</th>
+                                <th>Short</th>
+                                <th>Alias</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
-                <button type="submit" class="btn waves-effect waves-light blue" style="width: 100%;">SHORT IT!</button>
-            </form>
-        </div>
+            </div>
+        </div><br><br><br>
+        <center>Powered by Universitas Pamulang</center>
     </div>
-    <!-- Modal Structure -->
+
     <div id="modal-signin" class="modal">
         <div class="modal-content">
             <h4>Form Login</h4>
@@ -79,7 +105,7 @@
     </div>
     <div id="modal-signup" class="modal modal-fixed-footer">
         <div class="modal-content">
-            <h4>Form Signup</h4> <hr>
+            <h4>Form Signup</h4>
             <div class="row">
                 <form id="form-signup" class="col s12" method="post" autocomplete="off">
                     <div class="row">
@@ -111,6 +137,7 @@
             </a>
         </div>
     </div>
+
 </body>
 <script type="text/javascript">
     $(document).ready(function() {
@@ -121,12 +148,18 @@
         function init(){
             islogin = getItemWithExpiry('is_login');
             if (islogin) {
-                name = getItemWithExpiry('username');
-                $("#sign-in").text(name).prop('href', '#');
+                $("#box-al").prop('hidden', false);
+                $("#box").removeClass('col s12').addClass('col s6');
+                name = getItemWithExpiry('name');
+                $("#sign-in").text(`Welcome, ${name}!`).prop('href', '#');
                 $("#sign-up").text("Logout").prop('href', '#').click(function(event) {
                     if (confirm("Are you sure want to logout ?")) {
+                        $("body").addClass('loading');
                         window.localStorage.clear();
                         window.location.reload(0);
+                        setTimeout(function(){
+                            $("body").removeClass('loading');
+                        }, 1000);
                     }
                 });
             }
@@ -158,11 +191,20 @@
 
         $("#form-shortlink").submit(function(event) {
             event.preventDefault();
+            islogin = getItemWithExpiry('is_login');
+            if (islogin) {
+                data = JSON.stringify({
+                    "longurl": $("#url").val(),
+                    "user_id": getItemWithExpiry("user_id")
+                });
+            }else{
+                data = JSON.stringify({
+                    "longurl": $("#url").val(),
+                });
+            }
             $.ajax({
                 url: API+"/link/submit",
-                data: JSON.stringify({
-                    "longurl": $("#url").val()
-                }),
+                data: data,
                 headers: {
                     "Content-Type": 'application/json'
                 },
@@ -175,6 +217,7 @@
             })
         });
         async function login(username, password) {
+            $("body").addClass('loading');
             await $.ajax({
                 url: API+"/user/login",
                 data: JSON.stringify({
@@ -188,16 +231,19 @@
                 type: "post"
             }).done((data, status, xhr) => {
                 if (data.status == 200) {
-                    const name = data.data;
+                    const response = data.response;
                     M.toast({html: 'You are successfully logged in!', classes: 'rounded'});
+                    $("body").removeClass('loading');
                     setItemWithExpiry('is_login', true);
                     setItemWithExpiry('is_login', true);
                     setItemWithExpiry('username', $("#username").val());
-                    setItemWithExpiry('name', name);
+                    setItemWithExpiry('name', response.data.name);
+                    setItemWithExpiry('user_id', response.data.id);
                     init();
                     $("#modal-signin, #modal-signup").modal('close');
                 }
             }).fail((xhr, status, err) => {
+                $("body").removeClass('loading');
                 if (xhr.status == 404 || xhr.status == 400) {
                     M.toast({html: 'Username or password is wrong!', classes: 'rounded'});
                 }
@@ -237,6 +283,11 @@
                     M.toast({html: 'Bad Request!', classes: 'rounded'});
                 }
             })
+        });
+        $("#mytable").DataTable({
+            searching: false,
+            binfo: false,
+            fixedHeader: true
         });
     });
 </script>
