@@ -43,21 +43,22 @@
     <div class="container">
         <div class="row">
             <div class="col s12" id="box">
-                <h3> <b> The Link Shortener </b></h3>
+                <h4> <b> The Link Shortener </b></h4>
                 <form id="form-shortlink" class="col s12" method="post" autocomplete="off" accept-charset="utf-8">
                     <div class="row">
                         <div class="input-field col s12">
                             <input id="url" name="url" type="url" class="validate" placeholder="https://yourdomain.id/very-long-link" required>
                             <label for="url">Long URL</label>
                         </div>
+                        <p id="result"></p>
                     </div>
                     <button type="submit" class="btn waves-effect waves-light blue" style="width: 100%;">SHORT IT!</button>
                 </form>  
             </div>
-            <div class="col s6" id="box-al" hidden="true">
+            <div class="col s7" id="box-al" hidden="true">
                 <div class="container">
                     <h4><b>My Shortlink</b></h4>
-                    <table id="mytable" class="display">
+                    <table id="mytable" class="display" style="width: 100%;">
                         <thead>
                             <tr>
                                 <th>No</th>
@@ -143,13 +144,12 @@
     $(document).ready(function() {
 
         const APPURL = "pendek.id", API = "http://localhost:1000";
-        
         init();
         function init(){
             islogin = getItemWithExpiry('is_login');
             if (islogin) {
                 $("#box-al").prop('hidden', false);
-                $("#box").removeClass('col s12').addClass('col s6');
+                $("#box").removeClass('col s12').addClass('col s5');
                 name = getItemWithExpiry('name');
                 $("#sign-in").text(`Welcome, ${name}!`).prop('href', '#');
                 $("#sign-up").text("Logout").prop('href', '#').click(function(event) {
@@ -189,6 +189,45 @@
             return item.value;
         }
 
+        if (getItemWithExpiry('is_login')) {
+            $("#mytable").DataTable({
+                searching: false,
+                responsive: true,
+                fixedHeader: true,
+                ajax: {
+                    url: API+"/link/me/" + getItemWithExpiry('user_id'),
+                    type: "get",
+                    dataSrc: function(json) {
+                        return json.response.data;
+                    }
+                },
+                columns: [
+                    { 
+                        "data": "id",
+                        "render": function(data, type, row, meta) {
+                            return ++meta.row;
+                        },
+                        "defaultContent": ""
+                    },
+                    { 
+                        "data": "longurl",
+                        "defaultContent": ""
+                    },
+                    { 
+                        "data": "shorturl",
+                        "defaultContent": ""
+                    },
+                    { 
+                        "data": "aliasurl",
+                        "render": function(data, type, row) {
+                            return data ? data.split("\n").join("<br/>") : "-";
+                        },
+                        "defaultContent": ""
+                    },
+                ]
+            });
+        }
+
         $("#form-shortlink").submit(function(event) {
             event.preventDefault();
             islogin = getItemWithExpiry('is_login');
@@ -212,7 +251,11 @@
                 type: "post"
             }).done((data, status, xhr) => {
                 if (data.status == 201) {
+                    const response = data.response.data;
                     M.toast({html: 'Success!', classes: 'rounded'});
+                    $("#result").html(
+                        `Result: <a href='https://${APPURL}/${response.short_url}' target='_blank'>https://${APPURL}/${response.short_url}</a>`
+                    );
                 }
             })
         });
@@ -241,6 +284,9 @@
                     setItemWithExpiry('user_id', response.data.id);
                     init();
                     $("#modal-signin, #modal-signup").modal('close');
+                    setTimeout(function(){
+                        window.location.reload();
+                    }, 1000);
                 }
             }).fail((xhr, status, err) => {
                 $("body").removeClass('loading');
@@ -283,11 +329,6 @@
                     M.toast({html: 'Bad Request!', classes: 'rounded'});
                 }
             })
-        });
-        $("#mytable").DataTable({
-            searching: false,
-            binfo: false,
-            fixedHeader: true
         });
     });
 </script>
