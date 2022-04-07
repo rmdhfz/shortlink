@@ -58,8 +58,8 @@
                 <h4> <b> The Link Shortener </b></h4> <br>
                 <form id="form-shortlink" class="col s12" method="post" autocomplete="off" accept-charset="utf-8">
                 <div class="row">
-                        <div class="input-field col s12">
-                            <input id="namelink" name="namelink" type="text" class="validate" placeholder="my facebook" required>
+                        <div class="input-field col s12" id="box-linkname" hidden>
+                            <input id="namelink" name="namelink" type="text" class="validate" placeholder="my facebook">
                             <label for="namelink">Link Name</label>
                         </div>
                     </div>
@@ -198,7 +198,7 @@
         function init(){
             islogin = getItemWithExpiry('is_login');
             if (islogin) {
-                $("#box-al").prop('hidden', false);
+                $("#box-al, #box-linkname").prop('hidden', false);
                 $("#box").removeClass('col s12').addClass('col s6');
                 name = getItemWithExpiry('name');
                 $("#sign-in, #sign-in-mobile").text(`Welcome, ${name}!`).prop('href', '#');
@@ -300,6 +300,14 @@
             });
         }
 
+        function checkIsLogin(){
+            islogin = getItemWithExpiry('is_login');
+            if (islogin) {
+                return true;
+            }
+            return false;
+        }
+
         $("#form-shortlink").submit(function(event) {
             event.preventDefault();
             islogin = getItemWithExpiry('is_login');
@@ -330,16 +338,15 @@
                     M.toast({html: 'Yeay. Your link has been shortened!', classes: 'rounded'});
                     $("#result").html(
                         `
-                        Result: <a href='https://${APPURL}/${response.short_url}' target='_blank'>https://${APPURL}/${response.short_url}</a> - 
-                        
-                        <i id="editlink" data-id="${response.id}" data-name="${response.name}" data-short="${response.short_url}" data-long="${response.long_url}" class='material-icons tiny'> edit </i>
-                        <i id="sharelink" data-id="${response.id}" data-name="${response.name}" data-short="${response.short_url}" data-long="${response.long_url}" class='dropdown-trigger tiny material-icons' data-target='sharelist'> share </i>
+                        Result: <a href='${APPURL}/${response.short_url}' target='_blank'>${APPURL}/${response.short_url}</a> -
+                            <i id="editlink" data-id="${response.id}" data-name="${response.name}" data-short="${response.short_url}" data-long="${response.long_url}" class='material-icons tiny' style="cursor: pointer"> edit </i>
+                            <i id="sharelink" data-id="${response.id}" data-name="${response.name}" data-short="${response.short_url}" data-long="${response.long_url}" class='dropdown-trigger tiny material-icons' data-target='sharelist'> share </i>
 
-                        <ul id='sharelist' class='dropdown-content'>
-                            <li><a href="#!">one</a></li>
-                            <li><a href="#!">two</a></li>
-                            <li><a href="#!">three</a></li>
-                        </ul>`
+                            <ul id='sharelist' class='dropdown-content'>
+                                <li><a href="#!">one</a></li>
+                                <li><a href="#!">two</a></li>
+                                <li><a href="#!">three</a></li>
+                            </ul>`
                     );
                     table.ajax.reload();
                 }
@@ -355,31 +362,69 @@
             if (!link_id) {
                 return false;
             }
-            $("#modal-editlink").modal('open');
-            $("#link_id").val(link_id);
-            $("#linkname").val(name);
-            $("#defaultlink").val(`${APPURL}/${short_url}`);
-            $("#aliasurl").val(short_url);
-            $("#longurl").val(long_url);
+            islogin = checkIsLogin();
+            if (islogin) {
+                $("#modal-editlink").modal('open');
+                $("#link_id").val(link_id);
+                $("#linkname").val(name);
+                $("#defaultlink").val(`${APPURL}/${short_url}`);
+                $("#aliasurl").val(short_url);
+                $("#longurl").val(long_url);
+            }else{
+                M.toast({html: '💎 Log In to use all features.'});
+            }
         }
         function ShareMyLink(link_id, short_url) {
             if (!link_id) {
                 return false;
             }
-            $('.dropdown-trigger').dropdown('open');
+            islogin = checkIsLogin();
+            if (islogin) {
+
+            }else{
+                M.toast({html: '💎 Log In to use all features.'});
+            }
+        }
+        function DeleteMyLink(link_id, short){
+            if (!link_id) {
+                return false;
+            }
+            $("body").addClass('loading');
+            $.ajax({
+                url: API + "/link/" + link_id,
+                type: "DELETE",
+                dataType: "json",
+                headers: {
+                    "Content-Type": 'application/json'
+                } 
+            }).done((data, status, xhr) => {
+                $("body").removeClass('loading');
+                if (data.status == 200) {
+                    M.toast({html: 'Link has been deleted!', classes: 'rounded'});
+                    table.ajax.reload();
+                }
+            }).fail((xhr, status, err) => {
+                $("body").removeClass('loading');
+                table.ajax.reload();
+                if (xhr.status == 400) {
+                    M.toast({html: 'Ups. Bad Request'});
+                }
+            })
         }
         $("#result").on('click', '#editlink', function(){
             PrepareEditMyLink($(this).data('id'), $(this).data('name'), $(this).data('short'), $(this).data('long'));
         });
         $("#result").on('click', '#sharelink', function(){
             ShareMyLink($(this).data('id'), $(this).data('short'));
-            $('.dropdown-trigger').dropdown('open');
+            $(this).find('.dropdown-trigger').dropdown('open');
         });
         $("#mytable").on('click', '#editlink', function(){
             PrepareEditMyLink($(this).data('id'), $(this).data('name'), $(this).data('short'), $(this).data('long'));
         });
         $("#mytable").on('click', '#deletelink', function(){
-            DeleteMyLink($(this).data('id'), $(this).data('short'));
+            if (confirm("Are you sure want to delete this link ?")) {
+                DeleteMyLink($(this).data('id'), $(this).data('short'));
+            }
         });
         $("#form-editlink").submit(function(event){
             event.preventDefault();
