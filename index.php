@@ -22,11 +22,15 @@
     <script>
         $(document).ready(function(){
             $('.modal').modal();
+            $('.sidenav').sidenav();
         });
     </script>
     <style type="text/css">
         #box, #box-al {
             margin-top: 8rem;
+        }
+        nav {
+            background-color: #2196F3 !important;
         }
     </style>
 </head>
@@ -34,12 +38,17 @@
     <nav>
         <div class="nav-wrapper container">
             <a href="/" class="brand-logo">Shortlink App</a>
+            <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
             <ul id="nav-mobile" class="right hide-on-med-and-down">
                 <li><a class="modal-trigger" href="#modal-signin" id="sign-in">Signin</a></li>
                 <li><a class="modal-trigger" href="#modal-signup" id="sign-up">Signup</a></li>
             </ul>
         </div>
     </nav>
+    <ul class="sidenav" id="mobile-demo">
+        <li><a class="modal-trigger" href="#modal-signin" id="sign-in-mobile">Signin</a></li>
+        <li><a class="modal-trigger" href="#modal-signup" id="sign-up-mobile">Signup</a></li>
+    </ul>
     <div class="container">
         <div class="row">
             <div class="col s12" id="box">
@@ -50,7 +59,9 @@
                             <input id="url" name="url" type="url" class="validate" placeholder="https://yourdomain.id/very-long-link" required>
                             <label for="url">Long URL</label>
                         </div>
-                        <p id="result"></p>
+                        <div class="col s12">
+                            <p id="result"></p>
+                        </div>
                     </div>
                     <button type="submit" class="btn waves-effect waves-light blue" style="width: 100%;">SHORT IT!</button>
                 </form>  
@@ -151,8 +162,8 @@
                 $("#box-al").prop('hidden', false);
                 $("#box").removeClass('col s12').addClass('col s5');
                 name = getItemWithExpiry('name');
-                $("#sign-in").text(`Welcome, ${name}!`).prop('href', '#');
-                $("#sign-up").text("Logout").prop('href', '#').click(function(event) {
+                $("#sign-in, #sign-in-mobile").text(`Welcome, ${name}!`).prop('href', '#');
+                $("#sign-up, #sign-up-mobile").text("Logout").prop('href', '#').click(function(event) {
                     if (confirm("Are you sure want to logout ?")) {
                         $("body").addClass('loading');
                         window.localStorage.clear();
@@ -194,6 +205,7 @@
                 searching: false,
                 responsive: true,
                 fixedHeader: true,
+                pageLength: 5,
                 ajax: {
                     url: API+"/link/me/" + getItemWithExpiry('user_id'),
                     type: "get",
@@ -231,6 +243,7 @@
         $("#form-shortlink").submit(function(event) {
             event.preventDefault();
             islogin = getItemWithExpiry('is_login');
+            $("body").addClass('loading');
             if (islogin) {
                 data = JSON.stringify({
                     "longurl": $("#url").val(),
@@ -251,14 +264,28 @@
                 type: "post"
             }).done((data, status, xhr) => {
                 if (data.status == 201) {
+                    $("body").removeClass('loading');
                     const response = data.response.data;
-                    M.toast({html: 'Success!', classes: 'rounded'});
+                    M.toast({html: 'Yeay. Your link has been shortened!', classes: 'rounded'});
                     $("#result").html(
-                        `Result: <a href='https://${APPURL}/${response.short_url}' target='_blank'>https://${APPURL}/${response.short_url}</a>`
+                        `Result: <a href='https://${APPURL}/${response.short_url}' target='_blank'>https://${APPURL}/${response.short_url}</a> - <button onclick='EditMyLink('${response.id}')' class='btn btn-small blue white-text btn-flat waves-effect waves-light'> edit </button>`
                     );
                 }
-            })
+            }).fail((xhr, status, err) => {
+                $("body").removeClass('loading');
+                if (xhr.status == 400) {
+                    M.toast({html: 'Ups. Your link is invalid :('});
+                }
+            });
         });
+        function EditMyLink(link_id) {
+            if (!link_id) {
+                return false;
+            }
+            alert(link_id);
+            $("#link_id").val(link_id);
+            $("#modal-editlink").modal('open');
+        }
         async function login(username, password) {
             $("body").addClass('loading');
             await $.ajax({
