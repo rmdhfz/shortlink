@@ -4,25 +4,28 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shortlink - App | Universitas Pamulang</title>
+    <title>Shortlink | Universitas Pamulang</title>
     <link rel="icon" href="img/shortlink.png">
     <meta name="keyword" content="url shortener, pendek.id, penyingkat url">
     <meta name="description" content="Make your long links into short just in one click, or create your personal / business microsite easily.">
-    <meta name="msapplication-TileColor" content="#FFFFFF">
     <meta name="msapplication-tap-highlight" content="no">
+    <meta name="msapplication-TileColor" content="#FFFFFF">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" media="screen, projection">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" media="screen, projection">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
     <!-- datatable -->
     <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css" media="screen, projection">
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css" media="screen, projection">
     <script src="//cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="//cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
     <!-- datatable -->
     <link rel="stylesheet" type="text/css" href="css/loading.css">
     <script>
         $(document).ready(function(){
             $('.modal').modal();
             $('.sidenav').sidenav();
+            $('.dropdown-trigger').dropdown();
         });
     </script>
     <style type="text/css">
@@ -37,7 +40,7 @@
 <body>
     <nav>
         <div class="nav-wrapper container">
-            <a href="/" class="brand-logo">Shortlink App</a>
+            <a href="/" class="brand-logo">Shortlink</a>
             <a href="#" data-target="mobile-demo" class="sidenav-trigger"><i class="material-icons">menu</i></a>
             <ul id="nav-mobile" class="right hide-on-med-and-down">
                 <li><a class="modal-trigger" href="#modal-signin" id="sign-in">Signin</a></li>
@@ -52,7 +55,7 @@
     <div class="container">
         <div class="row">
             <div class="col s12" id="box">
-                <h4> <b> The Link Shortener </b></h4>
+                <h4> <b> The Link Shortener </b></h4> <br>
                 <form id="form-shortlink" class="col s12" method="post" autocomplete="off" accept-charset="utf-8">
                     <div class="row">
                         <div class="input-field col s12">
@@ -66,30 +69,28 @@
                     <button type="submit" class="btn waves-effect waves-light blue" style="width: 100%;">SHORT IT!</button>
                 </form>  
             </div>
-            <div class="col s7" id="box-al" hidden="true">
-                <div class="container">
-                    <h4><b>My Shortlink</b></h4>
-                    <table id="mytable" class="display" style="width: 100%;">
-                        <thead>
-                            <tr>
-                                <th>No</th>
-                                <th>Long</th>
-                                <th>Short</th>
-                                <th>Alias</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
+            <div class="col s8" id="box-al" hidden="true">
+                <h4><b>My Shortlink</b></h4>
+                <table id="mytable" class="display responsive nowrap" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Long</th>
+                            <th>Short</th>
+                            <th>Alias</th>
+                            <th>Option</th>
+                        </tr>
+                    </thead>
+                </table>
             </div>
-        </div><br><br><br>
+        </div><br>
         <center>Powered by Universitas Pamulang</center>
     </div>
 
     <div id="modal-signin" class="modal">
         <div class="modal-content">
-            <h4>Form Login</h4>
-
+            <h4><b>Form Login</b></h4>
+            <div class="divider"></div><br>
             <div class="row">
                 <form id="form-login" class="col s12" method="post" autocomplete="off">
                     <div class="row">
@@ -115,9 +116,11 @@
             </a>
         </div>
     </div>
+
     <div id="modal-signup" class="modal modal-fixed-footer">
         <div class="modal-content">
-            <h4>Form Signup</h4>
+            <h4><b>Form Signup</b></h4>
+            <div class="divider"></div><br>
             <div class="row">
                 <form id="form-signup" class="col s12" method="post" autocomplete="off">
                     <div class="row">
@@ -150,6 +153,35 @@
         </div>
     </div>
 
+    <div id="modal-editlink" class="modal modal-fixed-footer" style="height: 30%">
+        <div class="modal-content">
+            <h4><b>Form Edit Link</b></h4>
+            <div class="divider"></div><br>
+            <div class="row">
+                <form id="form-editlink" class="col s12" method="post" autocomplete="off">
+                    <input type="hidden" id="link_id" name="link_id">
+                    <input type="hidden" id="longurl" name="longurl">
+                    <div class="row">
+                        <div class="input-field col s6">
+                            <input id="defaultlink" name="defaultlink" type="text" disabled="true" value="https://pendek.id" readonly="true" style="cursor: not-allowed">
+                            <label for="defaultlink">Default</label>
+                        </div>
+                        <div class="input-field col s6">
+                            <input id="aliasurl" name="aliasurl" autofocus="true" type="text" class="validate" required pattern="[a-zA-Z0-9]{3,15}" minlength="3" maxlength="15" placeholder="my-custom-link">
+                            <label for="aliasurl">Custom</label>
+                        </div>
+                    </div>
+                    <button id="btneditlink" type="submit" hidden></button>
+                </form>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" class="modal-close waves-effect waves-red btn-flat">Cancel</a>
+            <a href="#!" onclick="$('#btneditlink').click()" class="btn blue white-text waves-effect waves-light btn-flat">
+                Submit Changes
+            </a>
+        </div>
+    </div>
 </body>
 <script type="text/javascript">
     $(document).ready(function() {
@@ -160,7 +192,7 @@
             islogin = getItemWithExpiry('is_login');
             if (islogin) {
                 $("#box-al").prop('hidden', false);
-                $("#box").removeClass('col s12').addClass('col s5');
+                $("#box").removeClass('col s12').addClass('col s4');
                 name = getItemWithExpiry('name');
                 $("#sign-in, #sign-in-mobile").text(`Welcome, ${name}!`).prop('href', '#');
                 $("#sign-up, #sign-up-mobile").text("Logout").prop('href', '#').click(function(event) {
@@ -199,11 +231,13 @@
             }
             return item.value;
         }
-
+        let table;
         if (getItemWithExpiry('is_login')) {
-            $("#mytable").DataTable({
+            table = $("#mytable").DataTable({
                 searching: false,
-                responsive: true,
+                responsive: {
+                    detail: false
+                },
                 fixedHeader: true,
                 pageLength: 5,
                 ajax: {
@@ -236,6 +270,16 @@
                         },
                         "defaultContent": ""
                     },
+                    {
+                        "data":"id",
+                        "render": function(data, type, row) {
+                            return `
+                                <a id="editlink" data-id="${row.id}" data-short="${row.shorturl}" data-long="${row.longurl}" class='btn btn-small blue white-text btn-flat waves-effect waves-light'> edit </a>
+                                <a id="deletelink" data-id="${row.id}" data-short="${row.shorturl}" data-long="${row.longurl}" class='btn btn-small red white-text btn-flat waves-effect waves-light'> delete </a>
+                            `;
+                        },
+                        "defaultContent": ""
+                    }
                 ]
             });
         }
@@ -268,24 +312,82 @@
                     const response = data.response.data;
                     M.toast({html: 'Yeay. Your link has been shortened!', classes: 'rounded'});
                     $("#result").html(
-                        `Result: <a href='https://${APPURL}/${response.short_url}' target='_blank'>https://${APPURL}/${response.short_url}</a> - <button onclick='EditMyLink('${response.id}')' class='btn btn-small blue white-text btn-flat waves-effect waves-light'> edit </button>`
+                        `
+                        Result: <a href='https://${APPURL}/${response.short_url}' target='_blank'>https://${APPURL}/${response.short_url}</a> - 
+                        
+                        <a id="editlink" data-id="${response.id}" data-short="${response.short_url}" data-long="${response.long_url}" class='btn btn-small blue white-text btn-flat waves-effect waves-light'> edit </a>
+                        <a id="sharelink" data-id="${response.id}" data-short="${response.short_url}" data-long="${response.long_url}" class='dropdown-trigger btn btn-small blue white-text btn-flat waves-effect waves-light' data-target='sharelist'> share </a>
+
+                        <ul id='sharelist' class='dropdown-content'>
+                            <li><a href="#!">one</a></li>
+                            <li><a href="#!">two</a></li>
+                            <li><a href="#!">three</a></li>
+                        </ul>`
                     );
+                    table.ajax.reload();
                 }
             }).fail((xhr, status, err) => {
+                table.ajax.reload();
                 $("body").removeClass('loading');
                 if (xhr.status == 400) {
                     M.toast({html: 'Ups. Your link is invalid :('});
                 }
             });
         });
-        function EditMyLink(link_id) {
+        function PrepareEditMyLink(link_id, short_url, long_url) {
             if (!link_id) {
                 return false;
             }
-            alert(link_id);
             $("#link_id").val(link_id);
             $("#modal-editlink").modal('open');
+            $("#defaultlink").val(`${APPURL}/${short_url}`);
+            $("#aliasurl").val(short_url);
+            $("#longurl").val(long_url);
         }
+        function ShareMyLink(link_id, short_url) {
+            if (!link_id) {
+                return false;
+            }
+        }
+        $("#result").on('click', '#editlink', function(){
+            PrepareEditMyLink($(this).data('id'), $(this).data('short'), $(this).data('long'));
+        });
+        $("#result").on('click', '#sharelink', function(){
+            ShareMyLink($(this).data('id'), $(this).data('short'));
+            $('.dropdown-trigger').dropdown('open');
+        });
+        $("#mytable").on('click', '#editlink', function(){
+            PrepareEditMyLink($(this).data('id'), $(this).data('short'), $(this).data('long'));
+        });
+        $("#mytable").on('click', '#deletelink', function(){
+            DeleteMyLink($(this).data('id'), $(this).data('short'));
+        });
+        $("#form-editlink").submit(function(event){
+            event.preventDefault();
+            $("body").addClass('loading');
+            $.ajax({
+                url: API + "/link/custom/" + $("#link_id").val(),
+                type: "PUT",
+                data: JSON.stringify({
+                    "aliasurl": $("#aliasurl").val(),
+                    "longurl": $("#longurl").val()
+                }),
+                dataType: "json",
+                headers: {
+                    "Content-Type": 'application/json'
+                },
+            }).done((data, status, xhr) => {
+                $("body").removeClass('loading');
+                if (data.status == 201) {
+                    M.toast({html: 'Yeay. Your custom link is here!', classes: 'rounded'});
+                }
+            }).fail((xhr, status, err) => {
+                $("body").removeClass('loading');
+                if (xhr.status == 400) {
+                    M.toast({html: 'Ups. Your link is invalid :('});
+                }
+            })
+        });
         async function login(username, password) {
             $("body").addClass('loading');
             await $.ajax({
@@ -312,7 +414,7 @@
                     init();
                     $("#modal-signin, #modal-signup").modal('close');
                     setTimeout(function(){
-                        window.location.reload();
+                        window.location.reload(0);
                     }, 1000);
                 }
             }).fail((xhr, status, err) => {
