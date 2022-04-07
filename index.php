@@ -57,6 +57,12 @@
             <div class="col s12" id="box">
                 <h4> <b> The Link Shortener </b></h4> <br>
                 <form id="form-shortlink" class="col s12" method="post" autocomplete="off" accept-charset="utf-8">
+                <div class="row">
+                        <div class="input-field col s12">
+                            <input id="namelink" name="namelink" type="text" class="validate" placeholder="my facebook" required>
+                            <label for="namelink">Link Name</label>
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="input-field col s12">
                             <input id="url" name="url" type="url" class="validate" placeholder="https://yourdomain.id/very-long-link" required>
@@ -69,13 +75,13 @@
                     <button type="submit" class="btn waves-effect waves-light blue" style="width: 100%;">SHORT IT!</button>
                 </form>  
             </div>
-            <div class="col s8" id="box-al" hidden="true">
+            <div class="col s6" id="box-al" hidden="true">
                 <h4><b>My Shortlink</b></h4>
                 <table id="mytable" class="display responsive nowrap" style="width: 100%;">
                     <thead>
                         <tr>
                             <th>No</th>
-                            <th>Long</th>
+                            <th>Name</th>
                             <th>Short</th>
                             <th>Alias</th>
                             <th>Option</th>
@@ -160,6 +166,7 @@
             <div class="row">
                 <form id="form-editlink" class="col s12" method="post" autocomplete="off">
                     <input type="hidden" id="link_id" name="link_id">
+                    <input type="hidden" id="linkname" name="linkname">
                     <input type="hidden" id="longurl" name="longurl">
                     <div class="row">
                         <div class="input-field col s6">
@@ -186,13 +193,13 @@
 <script type="text/javascript">
     $(document).ready(function() {
 
-        const APPURL = "pendek.id", API = "http://localhost:1000";
+        const APPURL = "https://pendek.id", API = "http://localhost:1000";
         init();
         function init(){
             islogin = getItemWithExpiry('is_login');
             if (islogin) {
                 $("#box-al").prop('hidden', false);
-                $("#box").removeClass('col s12').addClass('col s4');
+                $("#box").removeClass('col s12').addClass('col s6');
                 name = getItemWithExpiry('name');
                 $("#sign-in, #sign-in-mobile").text(`Welcome, ${name}!`).prop('href', '#');
                 $("#sign-up, #sign-up-mobile").text("Logout").prop('href', '#').click(function(event) {
@@ -256,12 +263,21 @@
                         "defaultContent": ""
                     },
                     { 
-                        "data": "longurl",
+                        "data": "name",
                         "defaultContent": ""
                     },
                     { 
                         "data": "shorturl",
-                        "defaultContent": ""
+                        "defaultContent": "",
+                        "render": function(data, type, row) {
+                            let link = "";
+                            if (row.aliasurl) {
+                                link = `<a href="${APPURL}/${row.aliasurl}?utm_source=pendek.id" target="_blank">${APPURL}/${row.aliasurl}</a>`;
+                            }else{
+                                link = `<a href="${APPURL}/${row.shorturl}?utm_source=pendek.id" target="_blank">${APPURL}/${row.shorturl}</a>`;
+                            }
+                            return link;
+                        }
                     },
                     { 
                         "data": "aliasurl",
@@ -274,8 +290,8 @@
                         "data":"id",
                         "render": function(data, type, row) {
                             return `
-                                <a id="editlink" data-id="${row.id}" data-short="${row.shorturl}" data-long="${row.longurl}" class='btn btn-small blue white-text btn-flat waves-effect waves-light'> edit </a>
-                                <a id="deletelink" data-id="${row.id}" data-short="${row.shorturl}" data-long="${row.longurl}" class='btn btn-small red white-text btn-flat waves-effect waves-light'> delete </a>
+                                <a id="editlink" data-id="${row.id}" data-name="${row.name}" data-short="${row.shorturl}" data-long="${row.longurl}" class='btn btn-small blue white-text btn-flat waves-effect waves-light'> edit </a>
+                                <a id="deletelink" data-id="${row.id}" data-name="${row.name}" data-short="${row.shorturl}" data-long="${row.longurl}" class='btn btn-small red white-text btn-flat waves-effect waves-light'> delete </a>
                             `;
                         },
                         "defaultContent": ""
@@ -290,6 +306,7 @@
             $("body").addClass('loading');
             if (islogin) {
                 data = JSON.stringify({
+                    "name": $("#namelink").val(),
                     "longurl": $("#url").val(),
                     "user_id": getItemWithExpiry("user_id")
                 });
@@ -315,8 +332,8 @@
                         `
                         Result: <a href='https://${APPURL}/${response.short_url}' target='_blank'>https://${APPURL}/${response.short_url}</a> - 
                         
-                        <a id="editlink" data-id="${response.id}" data-short="${response.short_url}" data-long="${response.long_url}" class='btn btn-small blue white-text btn-flat waves-effect waves-light'> edit </a>
-                        <a id="sharelink" data-id="${response.id}" data-short="${response.short_url}" data-long="${response.long_url}" class='dropdown-trigger btn btn-small blue white-text btn-flat waves-effect waves-light' data-target='sharelist'> share </a>
+                        <i id="editlink" data-id="${response.id}" data-name="${response.name}" data-short="${response.short_url}" data-long="${response.long_url}" class='material-icons tiny'> edit </i>
+                        <i id="sharelink" data-id="${response.id}" data-name="${response.name}" data-short="${response.short_url}" data-long="${response.long_url}" class='dropdown-trigger tiny material-icons' data-target='sharelist'> share </i>
 
                         <ul id='sharelist' class='dropdown-content'>
                             <li><a href="#!">one</a></li>
@@ -334,12 +351,13 @@
                 }
             });
         });
-        function PrepareEditMyLink(link_id, short_url, long_url) {
+        function PrepareEditMyLink(link_id, name, short_url, long_url) {
             if (!link_id) {
                 return false;
             }
-            $("#link_id").val(link_id);
             $("#modal-editlink").modal('open');
+            $("#link_id").val(link_id);
+            $("#linkname").val(name);
             $("#defaultlink").val(`${APPURL}/${short_url}`);
             $("#aliasurl").val(short_url);
             $("#longurl").val(long_url);
@@ -348,16 +366,17 @@
             if (!link_id) {
                 return false;
             }
+            $('.dropdown-trigger').dropdown('open');
         }
         $("#result").on('click', '#editlink', function(){
-            PrepareEditMyLink($(this).data('id'), $(this).data('short'), $(this).data('long'));
+            PrepareEditMyLink($(this).data('id'), $(this).data('name'), $(this).data('short'), $(this).data('long'));
         });
         $("#result").on('click', '#sharelink', function(){
             ShareMyLink($(this).data('id'), $(this).data('short'));
             $('.dropdown-trigger').dropdown('open');
         });
         $("#mytable").on('click', '#editlink', function(){
-            PrepareEditMyLink($(this).data('id'), $(this).data('short'), $(this).data('long'));
+            PrepareEditMyLink($(this).data('id'), $(this).data('name'), $(this).data('short'), $(this).data('long'));
         });
         $("#mytable").on('click', '#deletelink', function(){
             DeleteMyLink($(this).data('id'), $(this).data('short'));
@@ -369,6 +388,7 @@
                 url: API + "/link/custom/" + $("#link_id").val(),
                 type: "PUT",
                 data: JSON.stringify({
+                    "name": $("#linkname").val(),
                     "aliasurl": $("#aliasurl").val(),
                     "longurl": $("#longurl").val()
                 }),
@@ -380,11 +400,16 @@
                 $("body").removeClass('loading');
                 if (data.status == 201) {
                     M.toast({html: 'Yeay. Your custom link is here!', classes: 'rounded'});
+                    table.ajax.reload();
                 }
             }).fail((xhr, status, err) => {
                 $("body").removeClass('loading');
+                table.ajax.reload();
                 if (xhr.status == 400) {
                     M.toast({html: 'Ups. Your link is invalid :('});
+                }else if (xhr.status == 302) {
+                    M.toast({html: 'Sorry. Your custom link is already taken!', classes: 'rounded'});
+                    table.ajax.reload();
                 }
             })
         });
